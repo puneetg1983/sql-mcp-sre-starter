@@ -1,0 +1,29 @@
+services:
+  dab:
+    image: ${DAB_IMAGE:?Run scripts/Install.ps1 -Hosting Docker first}
+    command: ["--ConfigFileName", "/etc/sqlmcp/dab-config.json"]
+    environment:
+      ASPNETCORE_URLS: http://127.0.0.1:5000
+      DOTNET_EnableDiagnostics: "0"
+    env_file:
+      - path: .local/runtime.env
+        format: raw
+    volumes:
+      - ./config/dab-config.json:/etc/sqlmcp/dab-config.json:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+  gateway:
+    image: ${GATEWAY_IMAGE:?Run scripts/Install.ps1 -Hosting Docker first}
+    network_mode: service:dab
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    env_file:
+      - path: .local/gateway.env
+        format: raw
+    volumes:
+      - ./config/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on: [dab]
+    restart: unless-stopped
+    user: "10001:10001"
+    security_opt: ["no-new-privileges:true"]

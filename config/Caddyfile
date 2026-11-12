@@ -1,0 +1,34 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	@authorized {
+		path /mcp /mcp/*
+		header X-API-Key {$MCP_API_KEY}
+	}
+	handle @authorized {
+		reverse_proxy 127.0.0.1:5000 {
+			header_up Host 127.0.0.1:5000
+			header_up -X-API-Key
+			header_up -Authorization
+			header_up -X-MS-*
+		}
+	}
+	handle /health {
+		rewrite * /
+		reverse_proxy 127.0.0.1:5000 {
+			@healthy status 200
+			handle_response @healthy {
+				respond "ok" 200
+			}
+			handle_response {
+				respond "unhealthy" 503
+			}
+		}
+	}
+	handle {
+		respond "Unauthorized" 401
+	}
+}

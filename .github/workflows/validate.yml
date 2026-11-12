@@ -1,0 +1,22 @@
+name: Validate starter
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Compile template
+        run: |
+          az bicep install --version v0.43.8
+          az bicep build --file infra/main.bicep --outfile infra/azuredeploy.json
+      - name: Require committed template to match source
+        run: git diff --exit-code -- infra/azuredeploy.json
+      - name: Run package and protocol checks
+        run: python -m unittest discover -s tests -p 'test_*.py'

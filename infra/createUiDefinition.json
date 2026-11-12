@@ -1,0 +1,113 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [],
+    "steps": [
+      {
+        "name": "sql",
+        "label": "SQL and networking",
+        "elements": [
+          {
+            "name": "notice",
+            "type": "Microsoft.Common.InfoBox",
+            "options": {
+              "icon": "Info",
+              "text": "Deploys the MCP host, not SQL grants. A DBA must run the generated setup script. Private SQL requires an approved Container Apps network path. No database or firewall is opened automatically."
+            }
+          },
+          {
+            "name": "name",
+            "type": "Microsoft.Common.TextBox",
+            "label": "MCP app name",
+            "defaultValue": "sql-mcp",
+            "constraints": { "required": true, "regex": "^[a-z][a-z0-9-]{0,18}[a-z0-9]$", "validationMessage": "Use 2-20 lowercase letters, digits or hyphens; start with a letter and end with a letter or digit." }
+          },
+          {
+            "name": "server",
+            "type": "Microsoft.Common.TextBox",
+            "label": "SQL TLS hostname",
+            "toolTip": "For Azure SQL, use server.database.windows.net. For a VM, use the DNS name on its SQL TLS certificate.",
+            "constraints": { "required": true, "regex": "^[a-zA-Z0-9][a-zA-Z0-9.-]+$", "validationMessage": "Enter a SQL hostname, not a URL, IP override or connection string." }
+          },
+          {
+            "name": "database",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Database name",
+            "constraints": { "required": true }
+          },
+          {
+            "name": "sqlPort",
+            "type": "Microsoft.Common.TextBox",
+            "label": "SQL TCP port",
+            "defaultValue": "1433",
+            "constraints": { "required": true, "regex": "^[0-9]{1,5}$", "validationMessage": "Enter a TCP port from 1 to 65535." }
+          },
+          {
+            "name": "authentication",
+            "type": "Microsoft.Common.DropDown",
+            "label": "MCP host to SQL authentication",
+            "defaultValue": "Managed identity (Azure SQL; configured SQL 2022+ VM)",
+            "constraints": {
+              "allowedValues": [
+                { "label": "Managed identity (Azure SQL; configured SQL 2022+ VM)", "value": "managed-identity" },
+                { "label": "Dedicated SQL reader login", "value": "sql-login" }
+              ],
+              "required": true
+            }
+          },
+          {
+            "name": "sqlUser",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Dedicated reader login name",
+            "visible": "[equals(steps('sql').authentication, 'sql-login')]",
+            "constraints": { "required": true }
+          },
+          {
+            "name": "sqlPassword",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": { "password": "Dedicated reader password", "confirmPassword": "Confirm reader password" },
+            "options": { "hideConfirmation": true },
+            "visible": "[equals(steps('sql').authentication, 'sql-login')]",
+            "constraints": { "required": true, "validationMessage": "Use only a pre-provisioned dedicated reader, never an administrator." }
+          },
+          {
+            "name": "environment",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Existing Container Apps environment resource ID (optional)",
+            "toolTip": "Use an environment in the deployment region with SQL DNS/routing. Leave empty to create an environment.",
+            "constraints": { "required": false }
+          },
+          {
+            "name": "subnet",
+            "type": "Microsoft.Common.TextBox",
+            "label": "New environment's approved subnet resource ID (optional)",
+            "toolTip": "Dedicated subnet delegated to Microsoft.App/environments. Required for private SQL unless you selected an existing connected environment. No existing subnets or DNS links are modified.",
+            "visible": "[empty(steps('sql').environment)]",
+            "constraints": { "required": false }
+          },
+          {
+            "name": "apiKey",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": { "password": "MCP API key (save in your password manager)", "confirmPassword": "Confirm API key" },
+            "constraints": { "required": true, "regex": "^[A-Za-z0-9_-]{32,128}$", "validationMessage": "Use 32-128 random letters, digits, underscores or hyphens." }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "name": "[steps('sql').name]",
+      "sqlServer": "[steps('sql').server]",
+      "sqlDatabase": "[steps('sql').database]",
+      "sqlPort": "[int(steps('sql').sqlPort)]",
+      "sqlAuthentication": "[steps('sql').authentication]",
+      "sqlUser": "[if(equals(steps('sql').authentication, 'sql-login'), steps('sql').sqlUser, '')]",
+      "sqlPassword": "[if(equals(steps('sql').authentication, 'sql-login'), steps('sql').sqlPassword, '')]",
+      "environmentId": "[steps('sql').environment]",
+      "infrastructureSubnetId": "[if(empty(steps('sql').environment), steps('sql').subnet, '')]",
+      "apiKey": "[steps('sql').apiKey]"
+    }
+  }
+}

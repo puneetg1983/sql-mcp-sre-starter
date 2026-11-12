@@ -1,0 +1,80 @@
+{
+  "$schema": "https://github.com/Azure/data-api-builder/releases/download/v2.1.5/dab.draft.schema.json",
+  "data-source": {
+    "database-type": "mssql",
+    "connection-string": "@env('SQL_CONNECTION_STRING')",
+    "options": { "set-session-context": false }
+  },
+  "runtime": {
+    "host": { "mode": "production", "authentication": { "provider": "Unauthenticated" } },
+    "rest": { "enabled": false },
+    "graphql": { "enabled": false },
+    "cache": { "enabled": false },
+    "mcp": {
+      "enabled": true,
+      "path": "/mcp",
+      "description": "Read live diagnostic state for one database. Correlate timestamps, sessions and transactions. Never modify SQL.",
+      "dml-tools": {
+        "describe-entities": true, "read-records": true, "execute-entity": true,
+        "create-record": false, "update-record": false, "delete-record": false,
+        "aggregate-records": false
+      }
+    }
+  },
+  "entities": {
+    "Requests": {
+      "source": { "type": "view", "object": "sre_sql.Requests" },
+      "fields": [
+        { "name": "SessionId", "primary-key": true }, { "name": "RequestId", "primary-key": true },
+        { "name": "BlockingSessionId" }, { "name": "Status" }, { "name": "WaitType" },
+        { "name": "WaitTimeMs" }, { "name": "WaitResource" }, { "name": "CpuTimeMs" },
+        { "name": "ElapsedTimeMs" }, { "name": "TransactionId" }, { "name": "ObservedAtUtc" }
+      ],
+      "description": "Current requests and waits in this database; visibility depends on SQL grants.",
+      "permissions": [{ "role": "anonymous", "actions": ["read"] }],
+      "cache": { "enabled": false }
+    },
+    "Sessions": {
+      "source": { "type": "view", "object": "sre_sql.Sessions" },
+      "fields": [
+        { "name": "SessionId", "primary-key": true }, { "name": "Status" },
+        { "name": "OpenTransactionCount" }, { "name": "ProgramName" },
+        { "name": "LastRequestStartedAt" }, { "name": "LastRequestEndedAt" }, { "name": "ObservedAtUtc" }
+      ],
+      "description": "Database sessions and directly referenced blockers, including sleeping transaction owners.",
+      "permissions": [{ "role": "anonymous", "actions": ["read"] }],
+      "cache": { "enabled": false }
+    },
+    "Transactions": {
+      "source": { "type": "view", "object": "sre_sql.Transactions" },
+      "fields": [
+        { "name": "SessionId", "primary-key": true }, { "name": "TransactionId", "primary-key": true },
+        { "name": "BeganAt" }, { "name": "TransactionType" }, { "name": "TransactionState" },
+        { "name": "ObservedAtUtc" }
+      ],
+      "description": "Current database transactions and their owning sessions.",
+      "permissions": [{ "role": "anonymous", "actions": ["read"] }],
+      "cache": { "enabled": false }
+    },
+    "ReadLocks": {
+      "source": {
+        "type": "stored-procedure", "object": "sre_sql.ReadLocks",
+        "parameters": [{ "name": "SessionId", "required": false, "default": null }]
+      },
+      "description": "Read current lock modes and grant/wait states, optionally filtered by SessionId.",
+      "permissions": [{ "role": "anonymous", "actions": ["execute"] }],
+      "cache": { "enabled": false }
+    },
+    "ConnectionInfo": {
+      "source": { "type": "view", "object": "sre_sql.ConnectionInfo" },
+      "fields": [
+        { "name": "SessionId", "primary-key": true }, { "name": "DatabaseName" },
+        { "name": "DatabaseUser" }, { "name": "IsDbOwner" }, { "name": "CanControlDatabase" },
+        { "name": "CanCreateTable" }, { "name": "ObservedAtUtc" }
+      ],
+      "description": "Runtime database identity and selected privilege checks, not a complete permissions audit.",
+      "permissions": [{ "role": "anonymous", "actions": ["read"] }],
+      "cache": { "enabled": false }
+    }
+  }
+}

@@ -1,0 +1,535 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.43.8.12551",
+      "templateHash": "13950931395000370165"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Use the same region as an existing Container Apps environment, if supplied."
+      }
+    },
+    "name": {
+      "type": "string",
+      "defaultValue": "sql-mcp",
+      "minLength": 2,
+      "maxLength": 20
+    },
+    "environmentId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Existing environment resource ID, or leave empty to create one."
+      }
+    },
+    "infrastructureSubnetId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "For a new environment: approved dedicated, delegated subnet ID with SQL connectivity. Leave empty only for an approved public SQL path."
+      }
+    },
+    "sqlServer": {
+      "type": "string",
+      "metadata": {
+        "description": "Normal TLS SQL hostname, not a private IP or connection string."
+      }
+    },
+    "sqlDatabase": {
+      "type": "string"
+    },
+    "sqlPort": {
+      "type": "int",
+      "defaultValue": 1433,
+      "minValue": 1,
+      "maxValue": 65535
+    },
+    "sqlAuthentication": {
+      "type": "string",
+      "defaultValue": "managed-identity",
+      "allowedValues": [
+        "managed-identity",
+        "sql-login"
+      ]
+    },
+    "sqlUser": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SQL-login mode only: pre-provisioned dedicated reader login. Never use an administrator."
+      }
+    },
+    "sqlPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SQL-login mode only: dedicated reader password. TLS encryption and certificate verification are always enabled."
+      }
+    },
+    "apiKey": {
+      "type": "securestring",
+      "minLength": 32,
+      "maxLength": 128,
+      "metadata": {
+        "description": "Keep in your password manager; use at least 32 random URL-safe characters. Sent by SRE Agent as X-API-Key."
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": {
+      "dab": "mcr.microsoft.com/azure-databases/data-api-builder@sha256:3b16893b676cc87cf1b17ff4b3bc184ac5ed0ae7a4b41497b5d571cb24cd278c",
+      "gateway": "docker.io/library/caddy:2.11.7-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5"
+    },
+    "$fxv#1": {
+      "$schema": "https://github.com/Azure/data-api-builder/releases/download/v2.1.5/dab.draft.schema.json",
+      "data-source": {
+        "database-type": "mssql",
+        "connection-string": "@env('SQL_CONNECTION_STRING')",
+        "options": {
+          "set-session-context": false
+        }
+      },
+      "runtime": {
+        "host": {
+          "mode": "production",
+          "authentication": {
+            "provider": "Unauthenticated"
+          }
+        },
+        "rest": {
+          "enabled": false
+        },
+        "graphql": {
+          "enabled": false
+        },
+        "cache": {
+          "enabled": false
+        },
+        "mcp": {
+          "enabled": true,
+          "path": "/mcp",
+          "description": "Read live diagnostic state for one database. Correlate timestamps, sessions and transactions. Never modify SQL.",
+          "dml-tools": {
+            "describe-entities": true,
+            "read-records": true,
+            "execute-entity": true,
+            "create-record": false,
+            "update-record": false,
+            "delete-record": false,
+            "aggregate-records": false
+          }
+        }
+      },
+      "entities": {
+        "Requests": {
+          "source": {
+            "type": "view",
+            "object": "sre_sql.Requests"
+          },
+          "fields": [
+            {
+              "name": "SessionId",
+              "primary-key": true
+            },
+            {
+              "name": "RequestId",
+              "primary-key": true
+            },
+            {
+              "name": "BlockingSessionId"
+            },
+            {
+              "name": "Status"
+            },
+            {
+              "name": "WaitType"
+            },
+            {
+              "name": "WaitTimeMs"
+            },
+            {
+              "name": "WaitResource"
+            },
+            {
+              "name": "CpuTimeMs"
+            },
+            {
+              "name": "ElapsedTimeMs"
+            },
+            {
+              "name": "TransactionId"
+            },
+            {
+              "name": "ObservedAtUtc"
+            }
+          ],
+          "description": "Current requests and waits in this database; visibility depends on SQL grants.",
+          "permissions": [
+            {
+              "role": "anonymous",
+              "actions": [
+                "read"
+              ]
+            }
+          ],
+          "cache": {
+            "enabled": false
+          }
+        },
+        "Sessions": {
+          "source": {
+            "type": "view",
+            "object": "sre_sql.Sessions"
+          },
+          "fields": [
+            {
+              "name": "SessionId",
+              "primary-key": true
+            },
+            {
+              "name": "Status"
+            },
+            {
+              "name": "OpenTransactionCount"
+            },
+            {
+              "name": "ProgramName"
+            },
+            {
+              "name": "LastRequestStartedAt"
+            },
+            {
+              "name": "LastRequestEndedAt"
+            },
+            {
+              "name": "ObservedAtUtc"
+            }
+          ],
+          "description": "Database sessions and directly referenced blockers, including sleeping transaction owners.",
+          "permissions": [
+            {
+              "role": "anonymous",
+              "actions": [
+                "read"
+              ]
+            }
+          ],
+          "cache": {
+            "enabled": false
+          }
+        },
+        "Transactions": {
+          "source": {
+            "type": "view",
+            "object": "sre_sql.Transactions"
+          },
+          "fields": [
+            {
+              "name": "SessionId",
+              "primary-key": true
+            },
+            {
+              "name": "TransactionId",
+              "primary-key": true
+            },
+            {
+              "name": "BeganAt"
+            },
+            {
+              "name": "TransactionType"
+            },
+            {
+              "name": "TransactionState"
+            },
+            {
+              "name": "ObservedAtUtc"
+            }
+          ],
+          "description": "Current database transactions and their owning sessions.",
+          "permissions": [
+            {
+              "role": "anonymous",
+              "actions": [
+                "read"
+              ]
+            }
+          ],
+          "cache": {
+            "enabled": false
+          }
+        },
+        "ReadLocks": {
+          "source": {
+            "type": "stored-procedure",
+            "object": "sre_sql.ReadLocks",
+            "parameters": [
+              {
+                "name": "SessionId",
+                "required": false,
+                "default": null
+              }
+            ]
+          },
+          "description": "Read current lock modes and grant/wait states, optionally filtered by SessionId.",
+          "permissions": [
+            {
+              "role": "anonymous",
+              "actions": [
+                "execute"
+              ]
+            }
+          ],
+          "cache": {
+            "enabled": false
+          }
+        },
+        "ConnectionInfo": {
+          "source": {
+            "type": "view",
+            "object": "sre_sql.ConnectionInfo"
+          },
+          "fields": [
+            {
+              "name": "SessionId",
+              "primary-key": true
+            },
+            {
+              "name": "DatabaseName"
+            },
+            {
+              "name": "DatabaseUser"
+            },
+            {
+              "name": "IsDbOwner"
+            },
+            {
+              "name": "CanControlDatabase"
+            },
+            {
+              "name": "CanCreateTable"
+            },
+            {
+              "name": "ObservedAtUtc"
+            }
+          ],
+          "description": "Runtime database identity and selected privilege checks, not a complete permissions audit.",
+          "permissions": [
+            {
+              "role": "anonymous",
+              "actions": [
+                "read"
+              ]
+            }
+          ],
+          "cache": {
+            "enabled": false
+          }
+        }
+      }
+    },
+    "images": "[variables('$fxv#0')]",
+    "suffix": "[uniqueString(resourceGroup().id, parameters('name'))]",
+    "config": "[string(variables('$fxv#1'))]",
+    "gatewayConfig": "{\r\n\tadmin off\r\n\tauto_https off\r\n}\r\n\r\n:8080 {\r\n\t@authorized {\r\n\t\tpath /mcp /mcp/*\r\n\t\theader X-API-Key {$MCP_API_KEY}\r\n\t}\r\n\thandle @authorized {\r\n\t\treverse_proxy 127.0.0.1:5000 {\r\n\t\t\theader_up Host 127.0.0.1:5000\r\n\t\t\theader_up -X-API-Key\r\n\t\t\theader_up -Authorization\r\n\t\t\theader_up -X-MS-*\r\n\t\t}\r\n\t}\r\n\thandle /health {\r\n\t\trewrite * /\r\n\t\treverse_proxy 127.0.0.1:5000 {\r\n\t\t\t@healthy status 200\r\n\t\t\thandle_response @healthy {\r\n\t\t\t\trespond \"ok\" 200\r\n\t\t\t}\r\n\t\t\thandle_response {\r\n\t\t\t\trespond \"unhealthy\" 503\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n\thandle {\r\n\t\trespond \"Unauthorized\" 401\r\n\t}\r\n}\r\n",
+    "readerName": "[format('{0}-reader-{1}', parameters('name'), variables('suffix'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[variables('readerName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "condition": "[empty(parameters('environmentId'))]",
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2025-01-01",
+      "name": "[format('{0}-env', parameters('name'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "workloadProfiles": [
+          {
+            "name": "Consumption",
+            "workloadProfileType": "Consumption"
+          }
+        ],
+        "appLogsConfiguration": {
+          "destination": "azure-monitor"
+        },
+        "vnetConfiguration": "[if(empty(parameters('infrastructureSubnetId')), null(), createObject('infrastructureSubnetId', parameters('infrastructureSubnetId'), 'internal', false()))]"
+      }
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2025-01-01",
+      "name": "[parameters('name')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('readerName')))]": {}
+        }
+      },
+      "properties": {
+        "managedEnvironmentId": "[if(empty(parameters('environmentId')), resourceId('Microsoft.App/managedEnvironments', format('{0}-env', parameters('name'))), parameters('environmentId'))]",
+        "workloadProfileName": "Consumption",
+        "configuration": {
+          "activeRevisionsMode": "Single",
+          "ingress": {
+            "external": true,
+            "allowInsecure": false,
+            "targetPort": 8080,
+            "transport": "auto"
+          },
+          "secrets": [
+            {
+              "name": "mcp-api-key",
+              "value": "[parameters('apiKey')]"
+            },
+            {
+              "name": "dab-config",
+              "value": "[variables('config')]"
+            },
+            {
+              "name": "gateway-config",
+              "value": "[variables('gatewayConfig')]"
+            },
+            {
+              "name": "sql-connection",
+              "value": "[if(equals(parameters('sqlAuthentication'), 'managed-identity'), format('Server=\"tcp:{0},{1}\";Database=\"{2}\";Encrypt=True;TrustServerCertificate=False;Authentication=Active Directory Managed Identity;User Id={3};Application Name=SqlMcp.Diagnostics;', replace(parameters('sqlServer'), '\"', '\"\"'), parameters('sqlPort'), replace(parameters('sqlDatabase'), '\"', '\"\"'), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('readerName')), '2023-01-31').clientId), format('Server=\"tcp:{0},{1}\";Database=\"{2}\";Encrypt=True;TrustServerCertificate=False;User ID=\"{3}\";Password=\"{4}\";Application Name=SqlMcp.Diagnostics;', replace(parameters('sqlServer'), '\"', '\"\"'), parameters('sqlPort'), replace(parameters('sqlDatabase'), '\"', '\"\"'), replace(parameters('sqlUser'), '\"', '\"\"'), replace(parameters('sqlPassword'), '\"', '\"\"')))]"
+            }
+          ]
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "gateway",
+              "image": "[variables('images').gateway]",
+              "command": [
+                "caddy"
+              ],
+              "args": [
+                "run",
+                "--config",
+                "/etc/caddy/Caddyfile",
+                "--adapter",
+                "caddyfile"
+              ],
+              "env": [
+                {
+                  "name": "MCP_API_KEY",
+                  "secretRef": "mcp-api-key"
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "volumeName": "gateway-config",
+                  "mountPath": "/etc/caddy"
+                }
+              ],
+              "resources": {
+                "cpu": "[json('0.25')]",
+                "memory": "0.5Gi"
+              }
+            },
+            {
+              "name": "dab",
+              "image": "[variables('images').dab]",
+              "args": [
+                "--ConfigFileName",
+                "/config/dab-config.json"
+              ],
+              "env": [
+                {
+                  "name": "SQL_CONNECTION_STRING",
+                  "secretRef": "sql-connection"
+                },
+                {
+                  "name": "ASPNETCORE_URLS",
+                  "value": "http://127.0.0.1:5000"
+                },
+                {
+                  "name": "DOTNET_EnableDiagnostics",
+                  "value": "0"
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "volumeName": "dab-config",
+                  "mountPath": "/config"
+                }
+              ],
+              "resources": {
+                "cpu": "[json('0.5')]",
+                "memory": "1Gi"
+              }
+            }
+          ],
+          "volumes": [
+            {
+              "name": "dab-config",
+              "storageType": "Secret",
+              "secrets": [
+                {
+                  "secretRef": "dab-config",
+                  "path": "dab-config.json"
+                }
+              ]
+            },
+            {
+              "name": "gateway-config",
+              "storageType": "Secret",
+              "secrets": [
+                {
+                  "secretRef": "gateway-config",
+                  "path": "Caddyfile"
+                }
+              ]
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 1
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', format('{0}-env', parameters('name')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('readerName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "endpoint": {
+      "type": "string",
+      "value": "[format('https://{0}/mcp', reference(resourceId('Microsoft.App/containerApps', parameters('name')), '2025-01-01').configuration.ingress.fqdn)]"
+    },
+    "readerName": {
+      "type": "string",
+      "value": "[if(equals(parameters('sqlAuthentication'), 'managed-identity'), variables('readerName'), parameters('sqlUser'))]"
+    },
+    "readerClientId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('readerName')), '2023-01-31').clientId]"
+    },
+    "readerPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('readerName')), '2023-01-31').principalId]"
+    },
+    "appId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.App/containerApps', parameters('name'))]"
+    },
+    "nextStep": {
+      "type": "string",
+      "value": "[format('Run scripts/New-DatabaseSetup.ps1 with the database, readerName above and -SqlAuthentication {0}. Then run scripts/Test-Mcp.ps1. Host deployment is not SQL readiness.', parameters('sqlAuthentication'))]"
+    }
+  }
+}

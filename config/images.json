@@ -1,0 +1,4 @@
+{
+  "dab": "mcr.microsoft.com/azure-databases/data-api-builder@sha256:3b16893b676cc87cf1b17ff4b3bc184ac5ed0ae7a4b41497b5d571cb24cd278c",
+  "gateway": "docker.io/library/caddy:2.11.7-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5"
+}
