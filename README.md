@@ -2,21 +2,13 @@
 
 Give your agent **read-only live SQL diagnostics**: requests, waits, sessions, transactions and locks. Runs Microsoft's SQL MCP Server (Data API builder), not a custom SQL execution server.
 
-**Three steps: deploy a host, authorize one database, connect SRE Agent.** Existing Azure SQL Database and SQL Server 2019+ on Azure VMs are supported targets. SQL Managed Instance is not included.
+**Three steps: deploy to Azure Container Apps, authorize one database, connect SRE Agent.** This quickstart uses **Azure Container Apps (recommended)** as its only hosting path. Existing Azure SQL Database and SQL Server 2019+ on Azure VMs are supported targets. SQL Managed Instance is not included.
 
 > Community starter, not a Microsoft product deployment. Infrastructure deployment is not proof of SQL readiness. See [validation status](docs/validation.md) before production use.
 
-## 1. Choose where to host
+## 1. Deploy to Azure Container Apps
 
-| Hosting | Choose this when | You provide |
-|---|---|---|
-| **Azure Container Apps (recommended)** | You want managed hosting and HTTPS with the fewest setup steps | An approved SQL network path |
-| **Existing AKS / Kubernetes** | Your team already operates Kubernetes | Ingress controller, HTTPS certificate, DNS, SQL network path and identity/secret management |
-| **Docker Compose on a Linux VM** | You prefer a VM or existing Docker infrastructure | Docker Compose 2.30+, HTTPS reverse proxy, DNS, SQL network path and identity/secret management |
-
-Same diagnostic contract and pinned public images on every host. No customer ACR, image builds, Python, or DAB installation. Kubernetes and VM hosting involve more customer-operated infrastructure; they are not one-click equivalents to ACA. [Hosting details](docs/hosting.md).
-
-### Container Apps: click to deploy
+Managed hosting and HTTPS, with no customer ACR, image builds, Python, or DAB installation. You provide an approved SQL network path.
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2FcreateUiDefinition.json)
 
@@ -28,29 +20,17 @@ Use **managed identity** for Azure SQL. For a SQL VM, use a dedicated SQL reader
 
 After deployment, open **Outputs** and save `endpoint` and `readerName`. With SQL-login authentication, use your supplied login name instead of `readerName`.
 
-### Prefer a guided command, or another host?
+## 2. Authorize the database, then verify
 
-Clone the repository at release **v0.1.1**, review its scripts, then run in PowerShell 7.2+:
+Clone release **v0.1.1**, then generate one DBA script in PowerShell 7.2+ using your deployment output. Replace `Orders` with your database name in both commands below:
 
 ```powershell
 git clone --branch v0.1.1 https://github.com/puneetg1983/sql-mcp-sre-starter.git
 cd sql-mcp-sre-starter
-pwsh ./scripts/Install.ps1
-```
-
-Choose **ACA**, **Kubernetes**, or **Docker**. ACA requires Azure CLI signed into the intended subscription (`az login`). The installer deploys ACA or generates the Kubernetes/Compose files; it never silently applies a Kubernetes manifest or starts a VM workload. It prints the exact next action.
-
-Secrets are kept out of command arguments and console output. Generated files live in access-restricted, git-ignored `.local`; some contain plaintext credentials. Protect them, do not upload them, and remove them when no longer needed.
-
-## 2. Authorize the database, then verify
-
-The guided installer generates **`.local/setup.sql`**. For a portal deployment, clone the repo and generate it using the deployment output:
-
-```powershell
 pwsh ./scripts/New-DatabaseSetup.ps1 -Database Orders -ReaderName '<readerName>'
 ```
 
-For SQL-login authentication, add `-SqlAuthentication sql-login` and use the pre-provisioned dedicated login name. Have your DBA review and run the generated script **in the target database**, using SSMS or another approved SQL client. The script installs diagnostic objects and narrow object grants; it does not change application tables or execute workload transactions.
+For SQL-login authentication, add `-SqlAuthentication sql-login` and use the pre-provisioned dedicated login name. Have your DBA review and run **`.local/setup.sql` in the target database**, using SSMS or another approved SQL client. The script installs diagnostic objects and narrow object grants; it does not change application tables or execute workload transactions.
 
 SQL VM setup additionally requires instance-level diagnostic grants. Azure SQL visibility varies by service tier. Neither database ownership nor administrator credentials are acceptable workarounds. [DBA permissions and visibility check](docs/permissions.md).
 
@@ -60,7 +40,9 @@ After the host has started, verify it:
 pwsh ./scripts/Test-Mcp.ps1 -Endpoint 'https://<host>/mcp' -Database Orders -ReaderName '<readerName>'
 ```
 
-For a portal deployment, enter the API key at the hidden prompt. For an installer deployment, omit the arguments to use the protected local handoff. The check rejects missing/wrong keys, verifies the tool/entity allow-lists, reads all diagnostic objects, and checks runtime identity and selected privileges. It does **not** create an order or deliberately block SQL.
+Enter your saved API key at the hidden prompt. The check rejects missing/wrong keys, verifies the tool/entity allow-lists, reads all diagnostic objects, and checks runtime identity and selected privileges. It does **not** create an order or deliberately block SQL.
+
+Generated files live in access-restricted, git-ignored `.local`. Protect them, do not upload them, and remove them when no longer needed.
 
 An empty requests list is normal on an idle database, but **not proof that other sessions are visible**. Complete the [independent session check](docs/permissions.md#prove-cross-session-visibility) before relying on blocking diagnostics.
 
@@ -89,7 +71,7 @@ The API key is a shared credential, not per-user authorization. HTTPS is mandato
 
 ## More detail
 
-[Hosting](docs/hosting.md) | [DBA permissions](docs/permissions.md) | [SRE connection](docs/connect-sre-agent.md) | [Operations](docs/operations.md) | [Advanced original guide](docs/advanced-reference.md) | [Validation](docs/validation.md)
+[DBA permissions](docs/permissions.md) | [SRE connection](docs/connect-sre-agent.md) | [Operations](docs/operations.md) | [Validation](docs/validation.md)
 
 ## License
 
@@ -97,4 +79,4 @@ Templates, scripts and documentation are [MIT licensed](LICENSE). Referenced con
 
 ## Remove the starter
 
-Remove only the dedicated resources you deployed after reviewing their scope. Do not delete a shared resource group, network or Container Apps environment. Stop Compose with `docker compose --env-file .local/images.env down`, or remove only the generated Kubernetes resources after reviewing the manifest. Have the DBA review removal of `sre_sql` objects and the dedicated reader; this package never drops the workload database.
+Remove only the dedicated Azure resources you deployed after reviewing their scope. Do not delete a shared resource group, network or Container Apps environment. Have the DBA review removal of `sre_sql` objects and the dedicated reader; this package never drops the workload database.
