@@ -18,7 +18,7 @@ Same diagnostic contract and pinned public images on every host. No customer ACR
 
 ### Container Apps: click to deploy
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.0%2Finfra%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.0%2Finfra%2FcreateUiDefinition.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2FcreateUiDefinition.json)
 
 Select your subscription, resource group and region. Supply the SQL hostname/database, authentication choice, and a random **32-128 character API key** saved in your password manager.
 
@@ -30,10 +30,10 @@ After deployment, open **Outputs** and save `endpoint` and `readerName`. With SQ
 
 ### Prefer a guided command, or another host?
 
-Clone the repository at release **v0.1.0**, review its scripts, then run in PowerShell 7.2+:
+Clone the repository at release **v0.1.1**, review its scripts, then run in PowerShell 7.2+:
 
 ```powershell
-git clone --branch v0.1.0 https://github.com/puneetg1983/sql-mcp-sre-starter.git
+git clone --branch v0.1.1 https://github.com/puneetg1983/sql-mcp-sre-starter.git
 cd sql-mcp-sre-starter
 pwsh ./scripts/Install.ps1
 ```
@@ -90,6 +90,10 @@ The API key is a shared credential, not per-user authorization. HTTPS is mandato
 ## More detail
 
 [Hosting](docs/hosting.md) | [DBA permissions](docs/permissions.md) | [SRE connection](docs/connect-sre-agent.md) | [Operations](docs/operations.md) | [Advanced original guide](docs/advanced-reference.md) | [Validation](docs/validation.md)
+
+## License
+
+Templates, scripts and documentation are [MIT licensed](LICENSE). Referenced container images retain their respective licenses.
 
 ## Remove the starter
 
