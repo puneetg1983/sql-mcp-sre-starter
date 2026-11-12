@@ -20,9 +20,12 @@ For private SQL, use an existing SQL-connected Container Apps environment or an 
 
 **Azure Container Apps (recommended)** provides managed hosting and HTTPS. You do not need to build images or install a container runtime.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2FcreateUiDefinition.json) | [Bicep template](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/infra/main.bicep) | [ARM JSON template](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/infra/azuredeploy.json)
+[![Deploy to Azure](https://raw.githubusercontent.com/puneetg1983/sql-mcp-sre-starter/main/docs/assets/deploy-azure.svg)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2FcreateUiDefinition.json)
+[![Bicep template](https://raw.githubusercontent.com/puneetg1983/sql-mcp-sre-starter/main/docs/assets/bicep.svg)](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/infra/main.bicep)
+[![ARM JSON template](https://raw.githubusercontent.com/puneetg1983/sql-mcp-sre-starter/main/docs/assets/arm.svg)](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/infra/azuredeploy.json)
+[![Terraform template](https://raw.githubusercontent.com/puneetg1983/sql-mcp-sre-starter/main/docs/assets/terraform.svg)](https://github.com/puneetg1983/sql-mcp-sre-starter/tree/main/infra/terraform)
 
-Prefer infrastructure as code? These are the same deployment templates used by the button. Use Bicep from the full `v0.1.1` repository checkout because it loads files from `config`; the compiled ARM JSON embeds those files. Both use the parameters described below.
+Prefer infrastructure as code? Bicep and ARM provide the same deployment as the button; Terraform wraps the committed ARM template. Use Bicep from the full `v0.1.1` checkout because it loads `config` files, or follow the [Terraform setup](https://github.com/puneetg1983/sql-mcp-sre-starter/tree/main/infra/terraform) from a `main` checkout. ARM JSON embeds its configuration. All use the SQL/network settings below. Terraform secrets are stored in state/plans; use an access-controlled, encrypted backend.
 
 Select your **subscription, resource group and region**. If reusing a Container Apps environment, select its region. Then fill in **SQL and networking** as follows:
 

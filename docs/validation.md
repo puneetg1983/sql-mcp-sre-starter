@@ -11,6 +11,7 @@ This page records actual evidence, not an implied support guarantee.
 | SQL Server on VM | Generated contract only; no end-to-end VM deployment certified |
 | Kubernetes / Docker Compose | Configuration generation only; no runtime certification yet |
 | Deploy to Azure portal form | Schema/parameter alignment checks only; interactive portal completion not yet certified |
+| Terraform ARM wrapper | Local initialization/validation and three mocked plan checks passed; no Terraform apply to Azure |
 | Native Entra remote SRE connector | Not implemented or claimed |
 
 See the release notes for changes. Always run the verifier and independent-session check on your database and approve all grants before connecting production.

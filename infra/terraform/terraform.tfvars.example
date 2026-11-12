@@ -1,0 +1,15 @@
+subscription_id     = "00000000-0000-0000-0000-000000000000"
+resource_group_name = "rg-sql-mcp"
+location            = "eastus"
+name                = "sql-mcp"
+sql_server          = "orders-sql.database.windows.net"
+sql_database        = "Orders"
+
+# Private SQL: select one approved network path, never both.
+# environment_id = "/subscriptions/.../resourceGroups/.../providers/Microsoft.App/managedEnvironments/..."
+# infrastructure_subnet_id = "/subscriptions/.../resourceGroups/.../providers/Microsoft.Network/virtualNetworks/.../subnets/..."
+
+# SQL VM without configured Entra support:
+# sql_authentication = "sql-login"
+# sql_user = "sre_mcp_reader"
+# Supply api_key and sql_password through your secret-management process, not this file.
