@@ -28,16 +28,15 @@ Select your **subscription, resource group and region**. If reusing a Container 
 
 | Form field | What to enter |
 |---|---|
-| **MCP app name** (`name`) | Keep `sql-mcp`, or choose 2-20 lowercase letters, digits or hyphens; start with a letter and end with a letter or digit. |
-| **SQL TLS hostname** (`sqlServer`) | Azure SQL: your normal server name, such as `orders-sql.database.windows.net`, even when using a private endpoint. SQL VM: a DNS name matching its SQL TLS certificate, such as `sql01.contoso.com`. Do not enter `https://`, an IP address, an instance name, a port or a connection string here. |
-| **Database name** (`sqlDatabase`) | The existing database to investigate, such as `Orders`; not the server name. Use this same name in Step 2. |
-| **SQL TCP port** (`sqlPort`) | Keep `1433` for Azure SQL. For a VM, enter the SQL instance's configured TCP port (1-65535); ask your DBA if unsure. Named instances need their actual TCP port, not `server\instance`. |
-| **MCP host to SQL authentication** (`sqlAuthentication`) | Choose **Managed identity** for Azure SQL. For a SQL VM, choose **Dedicated SQL reader login** unless SQL Server 2022+ Entra authentication is already configured. Managed identity access is granted by the DBA in Step 2, not automatically by deployment. |
-| **Dedicated reader login name** (`sqlUser`) | Shown only for SQL-login authentication. Enter an existing, dedicated SQL login provisioned by your DBA, such as `sre_mcp_reader`. Never use an administrator or application login. |
-| **Dedicated reader password** (`sqlPassword`) | Shown only for SQL-login authentication. Enter that reader's password; the template does not create the SQL login or reset its password. |
-| **Existing Container Apps environment resource ID (optional)** (`environmentId`) | To reuse an environment, paste its full Azure resource ID, not its name or URL. It must be in the selected region, support the `Consumption` workload profile and already have SQL connectivity. Otherwise leave empty to create an environment. |
-| **New environment's approved subnet resource ID (optional)** (`infrastructureSubnetId`) | Shown only when the existing-environment field is empty. For a new environment accessing private SQL, paste a full resource ID for an approved, dedicated subnet delegated to `Microsoft.App/environments`, with working SQL DNS/routing. This is the **Container Apps subnet**, not the SQL private endpoint subnet. |
-| **MCP API key** (`apiKey`) | Create and save a random 32-128 character key containing only letters, digits, `_` or `-`; enter it and confirm it. This is the separate credential SRE Agent will send as `X-API-Key`, not a SQL password. |
+| **MCP app name** | Keep `sql-mcp`. |
+| **SQL TLS hostname** | E.g. `orders-sql.database.windows.net` or the VM's certificate-matching DNS name. No URL, IP, port or `\instance`. |
+| **Database name** | Existing database, e.g. `Orders`; use the same name in Step 2. |
+| **SQL TCP port** | `1433` for Azure SQL; your DBA's configured TCP port for a VM. |
+| **MCP host to SQL authentication** | **Managed identity** for Azure SQL; **Dedicated SQL reader login** for a VM unless SQL 2022+ Entra is configured. |
+| **Dedicated reader login name / password** | SQL-login only: an existing DBA-provisioned reader and its password. Never administrator/application credentials. |
+| **Existing environment resource ID (optional)** | Full ID of a SQL-connected environment in this region with a `Consumption` workload profile; otherwise blank. |
+| **New environment's subnet resource ID (optional)** | For private SQL: dedicated Container Apps subnet delegated to `Microsoft.App/environments`, not the SQL endpoint subnet. See below. |
+| **MCP API key** | Save a random 32-128 character key using letters, digits, `_` or `-`. SRE Agent sends it as `X-API-Key`. |
 
 **Choose exactly one network path:**
 
