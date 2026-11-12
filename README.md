@@ -85,7 +85,16 @@ pwsh ./scripts/New-DatabaseSetup.ps1 -Database Orders -ReaderName '<readerName>'
 
 For SQL-login authentication, add `-SqlAuthentication sql-login`. Your DBA reviews and executes `.local/setup.sql` in the target database. **The starter never runs administrator SQL for you.**
 
-The script exposes requests, sessions, transactions, locks and connection identity, not business tables or arbitrary SQL. SQL VM diagnostic grants are instance scoped; Azure SQL visibility varies by tier. The [DBA reference](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/docs/permissions.md) explains both.
+**What `New-DatabaseSetup.ps1` does:**
+
+- Generates `.local/setup.sql` for your database, reader and authentication mode; **does not execute SQL**.
+- When run by the DBA, the generated SQL creates or updates four diagnostic views and the read-only `ReadLocks` procedure in `sre_sql`.
+- Creates the database reader user if missing; SQL-login mode requires an existing server login.
+- Grants access to those objects plus database-state visibility on Azure SQL or instance-level diagnostic visibility on SQL Server.
+- Rejects the wrong database, unsupported versions, an unrecognized existing schema and readers with database ownership or schema ownership.
+- Does not modify application tables, create SQL logins/passwords or send administrator credentials to MCP.
+
+Azure SQL visibility varies by tier. See the [DBA reference](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/docs/permissions.md) for grants and visibility requirements.
 
 Check the real endpoint, supplying your saved key at its hidden prompt:
 
