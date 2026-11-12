@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "13950931395000370165"
+      "templateHash": "15316931601292257803"
     }
   },
   "parameters": {
@@ -337,7 +337,7 @@
     "images": "[variables('$fxv#0')]",
     "suffix": "[uniqueString(resourceGroup().id, parameters('name'))]",
     "config": "[string(variables('$fxv#1'))]",
-    "gatewayConfig": "{\r\n\tadmin off\r\n\tauto_https off\r\n}\r\n\r\n:8080 {\r\n\t@authorized {\r\n\t\tpath /mcp /mcp/*\r\n\t\theader X-API-Key {$MCP_API_KEY}\r\n\t}\r\n\thandle @authorized {\r\n\t\treverse_proxy 127.0.0.1:5000 {\r\n\t\t\theader_up Host 127.0.0.1:5000\r\n\t\t\theader_up -X-API-Key\r\n\t\t\theader_up -Authorization\r\n\t\t\theader_up -X-MS-*\r\n\t\t}\r\n\t}\r\n\thandle /health {\r\n\t\trewrite * /\r\n\t\treverse_proxy 127.0.0.1:5000 {\r\n\t\t\t@healthy status 200\r\n\t\t\thandle_response @healthy {\r\n\t\t\t\trespond \"ok\" 200\r\n\t\t\t}\r\n\t\t\thandle_response {\r\n\t\t\t\trespond \"unhealthy\" 503\r\n\t\t\t}\r\n\t\t}\r\n\t}\r\n\thandle {\r\n\t\trespond \"Unauthorized\" 401\r\n\t}\r\n}\r\n",
+    "gatewayConfig": "{\n\tadmin off\n\tauto_https off\n}\n\n:8080 {\n\t@authorized {\n\t\tpath /mcp /mcp/*\n\t\theader X-API-Key {$MCP_API_KEY}\n\t}\n\thandle @authorized {\n\t\treverse_proxy 127.0.0.1:5000 {\n\t\t\theader_up Host 127.0.0.1:5000\n\t\t\theader_up -X-API-Key\n\t\t\theader_up -Authorization\n\t\t\theader_up -X-MS-*\n\t\t}\n\t}\n\thandle /health {\n\t\trewrite * /\n\t\treverse_proxy 127.0.0.1:5000 {\n\t\t\t@healthy status 200\n\t\t\thandle_response @healthy {\n\t\t\t\trespond \"ok\" 200\n\t\t\t}\n\t\t\thandle_response {\n\t\t\t\trespond \"unhealthy\" 503\n\t\t\t}\n\t\t}\n\t}\n\thandle {\n\t\trespond \"Unauthorized\" 401\n\t}\n}\n",
     "readerName": "[format('{0}-reader-{1}', parameters('name'), variables('suffix'))]"
   },
   "resources": [

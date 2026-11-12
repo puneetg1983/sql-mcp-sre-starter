@@ -1,0 +1,2 @@
+config/Caddyfile text eol=lf
+infra/azuredeploy.json text eol=lf
