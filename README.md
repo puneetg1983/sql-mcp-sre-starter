@@ -20,7 +20,9 @@ For private SQL, use an existing SQL-connected Container Apps environment or an 
 
 **Azure Container Apps (recommended)** provides managed hosting and HTTPS. You do not need to build images or install a container runtime.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2FcreateUiDefinition.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2Fazuredeploy.json/createUIDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fpuneetg1983%2Fsql-mcp-sre-starter%2Fv0.1.1%2Finfra%2FcreateUiDefinition.json) | [Bicep template](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/infra/main.bicep) | [ARM JSON template](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/infra/azuredeploy.json)
+
+Prefer infrastructure as code? These are the same deployment templates used by the button. Use Bicep from the full `v0.1.1` repository checkout because it loads files from `config`; the compiled ARM JSON embeds those files. Both use the parameters described below.
 
 Select your **subscription, resource group and region**. If reusing a Container Apps environment, select its region. Then fill in **SQL and networking** as follows:
 
