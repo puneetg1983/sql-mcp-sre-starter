@@ -10,6 +10,19 @@ You should not need to write a server, build a container image or follow pages o
 
 > This is a community starter, not a Microsoft product deployment. Review its [validation status](https://github.com/puneetg1983/sql-mcp-sre-starter/blob/v0.1.1/docs/validation.md) before production use. SQL permissions and private-network approval remain administrator decisions; no button can safely skip them.
 
+## Under the hood: SQL MCP and Data API builder
+
+We use **Microsoft's SQL MCP Server, built into [Data API builder (DAB)](https://learn.microsoft.com/azure/data-api-builder/mcp/overview)**, not a custom MCP implementation. DAB is an open-source engine that exposes configured database objects as APIs and MCP tools.
+
+The template starts two containers in one Container App:
+
+- **DAB:** runs Microsoft's prebuilt image with a mounted `dab-config.json`. That file enables `/mcp`, connects to your SQL database, and exposes only four diagnostic views and the read-only `ReadLocks` procedure installed in Step 2. There is no separate MCP package to install or Python server to run.
+- **Caddy gateway:** checks the `X-API-Key` header before forwarding requests to DAB over private loopback. Container Apps provides the external HTTPS endpoint.
+
+**Request path:** SRE Agent → HTTPS/API-key gateway → DAB SQL MCP → SQL diagnostics.
+
+This starter disables REST, GraphQL, write tools and caching. `execute_entity` is enabled only for the configured read-only lock procedure, not arbitrary SQL. DAB configuration and the dedicated reader's SQL grants constrain access. See the [DAB source](https://github.com/Azure/data-api-builder) for the engine; this repository supplies deployment, configuration and DBA setup.
+
 ## Before you start
 
 Have the SQL hostname/database, permission to deploy hosting, an active SRE Agent, and a DBA available to authorize a dedicated reader.
